@@ -145,7 +145,6 @@ void  Workspace::rebuildMenu() {
 void Workspace::initialiseWithOneWidget(WorkspaceContent* containingWidget) {
 	singleContents_ = containingWidget ? containingWidget : new WorkspaceChooser(this);
 	singleContents_->parentWorkspace_ = this;
-	std::cout << "Made workspace " << this << " with contents " << singleContents_ << std::endl;
 	layout_->addWidget(singleContents_);
 	splitterContents_ = nullptr;
 }
@@ -167,12 +166,10 @@ void Workspace::addWidgetVertical() {
 void Workspace::finishAddingWidget() {
 	if (!splitterContents_) enlarge();
 	Workspace* subworkspace = new Workspace((orientation_ == SplitOrientation::VERTICAL) ? SplitOrientation::HORIZONTAL : SplitOrientation::VERTICAL, new WorkspaceChooser(this), this, this);
-	std::cout << "Added subworkspace " << subworkspace << std::endl;
 	splitterContents_->addWidget(subworkspace);
 }
 
 void Workspace::replaceWidget(WorkspaceContent* former, const std::string* name, WorkspaceContent* newContent) {
-	std::cout << "Replacing widget " << former << " at " << this << " with " << newContent << ", singleContents_ " << singleContents_ << ", splitterContents_ " << splitterContents_ << std::endl;
 	if (singleContents_) {
 		layout_->removeWidget(singleContents_);
 		newContent->parentWorkspace_ = this;
@@ -181,9 +178,7 @@ void Workspace::replaceWidget(WorkspaceContent* former, const std::string* name,
 		contentsName_ = std::make_unique<std::string>(*name);
 	} else if (splitterContents_) {
 		int index = -1;
-		std::cout << "Splitter has size " << splitterContents_->count() << std::endl;
 		for (int i = 0; i < splitterContents_->count(); i++) {
-			std::cout << "Looking for " << former->parentWorkspace_ << ", has " << splitterContents_->widget(i) << std::endl;
 			if (splitterContents_->widget(i) == former->parentWorkspace_) {
 				index = i;
 				break;
@@ -202,7 +197,6 @@ void Workspace::removeSelf() {
 }
 
 void Workspace::enlarge() {
-	std::cout << "Enlarging, singleContents_ " << singleContents_ << ", splitterContents_ " << splitterContents_ << std::endl;
 	splitterContents_ = new QSplitter((orientation_ == SplitOrientation::VERTICAL) ? Qt::Orientation::Vertical : Qt::Orientation::Horizontal);
 	Workspace* subworkspace = new Workspace((orientation_ == SplitOrientation::VERTICAL) ? SplitOrientation::HORIZONTAL : SplitOrientation::VERTICAL, singleContents_, this, this);
 	subworkspace->contentsName_ = std::move(contentsName_);
@@ -210,7 +204,6 @@ void Workspace::enlarge() {
 	splitterContents_->addWidget(subworkspace);
 	layout_->addWidget(splitterContents_);
 	singleContents_ = nullptr;
-	std::cout << "Enlarged, singleContents_ " << singleContents_ << ", splitterContents_ " << splitterContents_ << " subworkspace " << subworkspace << std::endl;
 }
 
 WorkspaceChooser::WorkspaceChooser(Workspace* parent) : WorkspaceContent(parent) {
@@ -219,7 +212,6 @@ WorkspaceChooser::WorkspaceChooser(Workspace* parent) : WorkspaceContent(parent)
 	for (auto& name : available) {
 		QPushButton* button = new QPushButton(QString::fromStdString(name), this);
 		connect(button, &QPushButton::clicked, this, [name, this] () {
-			std::cout << "Replacing widget " << parentWorkspace_ << " at " << this << std::endl;
 			parentWorkspace_->replaceWidget(this, &name, constructWorkspace(name, parentWorkspace_));
 			deleteLater();
 		});

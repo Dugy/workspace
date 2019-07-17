@@ -4,7 +4,7 @@
 #include <functional>
 #include <QFrame>
 #include <memory>
-#include "serialisable.hpp"
+#include "serialisable/serialisable.hpp"
 
 class QMenuBar;
 class QMenu;
