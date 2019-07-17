@@ -9,6 +9,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	ui->setupUi(this);
 	ui->mainLayout->addWidget(workspace_ = new Workspace());
 	workspace_->load("saved_layout.json");
+	showMaximized();
 }
 
 MainWindow::~MainWindow()

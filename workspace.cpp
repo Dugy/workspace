@@ -50,6 +50,14 @@ void Workspace::serialisation() {
 	try {
 		synch("size", size_);
 
+		if (saving() && orientation_ != SplitOrientation::UNSPECIFIED)
+			directionDescriptor = std::make_unique<bool>((orientation_ == SplitOrientation::HORIZONTAL) ? true : false);
+		synch("horizontal", directionDescriptor);
+		if (!saving()) {
+			if (!directionDescriptor) orientation_ = SplitOrientation::UNSPECIFIED;
+			else orientation_ = (*directionDescriptor) ? SplitOrientation::HORIZONTAL : SplitOrientation::VERTICAL;
+		}
+
 		if (saving() && splitterContents_) {
 			manyContentDescriptors = std::make_unique<std::vector<std::unique_ptr<Workspace>>>();
 			for (int i = 0; i < splitterContents_->count(); i++) {
@@ -69,6 +77,7 @@ void Workspace::serialisation() {
 				totalStretchFactor += (*manyContentDescriptors)[i]->size_;
 			for (unsigned int i = 0; i < manyContentDescriptors->size(); i++) {
 				int size = (*manyContentDescriptors)[i]->size_;
+				(*manyContentDescriptors)[i]->setParentWorkspace(this);
 				splitterContents_->addWidget((*manyContentDescriptors)[i].release());
 				splitterContents_->setStretchFactor(i, size / totalStretchFactor);
 			}
@@ -81,20 +90,11 @@ void Workspace::serialisation() {
 					initialiseWithOneWidget(constructWorkspace(*contentsName_, this));
 				else
 					initialiseWithOneWidget(new WorkspaceChooser(this));
-			} else singleContents_ = nullptr;
+			}
 			if (singleContents_) {
 				synch("widget", *singleContents_);
 			}
 		}
-
-		if (saving() && orientation_ != SplitOrientation::UNSPECIFIED)
-			directionDescriptor = std::make_unique<bool>((orientation_ == SplitOrientation::HORIZONTAL) ? true : false);
-		synch("horizontal", directionDescriptor);
-		if (!saving()) {
-			if (!directionDescriptor) orientation_ = SplitOrientation::UNSPECIFIED;
-			else orientation_ = (*directionDescriptor) ? SplitOrientation::HORIZONTAL : SplitOrientation::VERTICAL;
-		}
-
 	} catch (std::exception& e) {
 		cleanup();
 		throw(e);
@@ -124,7 +124,7 @@ void  Workspace::rebuildMenu() {
 	menu_->setMinimumWidth(150);
 	layoutMenu_ = menu_->addMenu("Layout");
 	addWidgetRight_ = (orientation_ != SplitOrientation::VERTICAL) ? layoutMenu_->addAction("Add widget right") : nullptr;
-	addWidgetDown_ = (orientation_ != SplitOrientation::HORIZONTAL) ? layoutMenu_->addAction("Add action down") : nullptr;
+	addWidgetDown_ = (orientation_ != SplitOrientation::HORIZONTAL) ? layoutMenu_->addAction("Add widget down") : nullptr;
 
 	if (addWidgetRight_) connect(addWidgetRight_, &QAction::triggered, this, &Workspace::addWidgetHorizontal);
 	if (addWidgetDown_) connect(addWidgetDown_, &QAction::triggered, this, &Workspace::addWidgetVertical);
@@ -140,6 +140,11 @@ void  Workspace::rebuildMenu() {
 		removeContentAction_ = changeContentMenu_->addAction("Remove");
 		connect(removeContentAction_, &QAction::triggered, this, &Workspace::removeSelf);
 	}
+}
+
+void Workspace::setParentWorkspace(Workspace* parentWorkspace) {
+	parentWorkspace_ = parentWorkspace;
+	rebuildMenu();
 }
 
 void Workspace::initialiseWithOneWidget(WorkspaceContent* containingWidget) {

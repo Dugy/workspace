@@ -72,7 +72,7 @@ private:
 	void clearContents();
 	void initialiseWithOneWidget(WorkspaceContent* containingWidget = nullptr);
 	void finishAddingWidget();
-
+	void setParentWorkspace(Workspace* parentWorkspace = nullptr);
 public:
 	void serialisation() override;
 
